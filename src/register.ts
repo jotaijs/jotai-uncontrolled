@@ -83,10 +83,7 @@ export function register(options: Options) {
           if (isAtom(atom))
             unsubs.push(
               subscribe(store, atom, (v) => {
-                instance.setAttribute(
-                  key,
-                  typeof v === 'number' ? `${v}px` : `${v}`,
-                );
+                instance.setAttribute(key, `${v}`);
               }),
             );
         });
