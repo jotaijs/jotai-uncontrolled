@@ -3,16 +3,16 @@ import {
   // @ts-ignore
   experimental_use as use,
 } from 'react';
-import type { Context } from 'react';
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai';
-import type { Atom } from 'jotai';
 
-type ExtractContextValue<T> = T extends Context<infer V> ? V : never;
-
-type Displayable = string | number;
-type DisplayableAtom = Atom<Displayable | Promise<Displayable>>;
-type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>;
-type Store = ExtractContextValue<ReturnType<typeof getScopeContext>>['s'];
+import type {
+  Store,
+  DisplayableAtom,
+  Displayable,
+  Scope,
+  BaseOptions,
+} from './types';
+import { isAtom } from './helpers';
 
 const READ_ATOM = 'r';
 const SUBSCRIBE_ATOM = 's';
@@ -43,17 +43,12 @@ const subscribe = (
   return unsub;
 };
 
-type Options = {
-  text?: DisplayableAtom;
-  className?: DisplayableAtom;
-  style?: Partial<{
-    [key in keyof CSSStyleDeclaration]: DisplayableAtom;
-  }>;
-  attrs?: {
-    [key: string]: DisplayableAtom;
-  };
+type Options = BaseOptions & {
   scope?: Scope;
   pending?: string;
+  attrs?: {
+    [key: string]: DisplayableAtom | unknown;
+  };
 };
 
 export function register(options: Options) {
@@ -64,9 +59,9 @@ export function register(options: Options) {
     unsubs.forEach((unsub) => unsub());
     unsubs.splice(0);
     if (instance instanceof Element) {
-      if (options.text) {
+      if (isAtom(options.children)) {
         unsubs.push(
-          subscribe(store, options.text, (v) => {
+          subscribe(store, options.children, (v) => {
             instance.textContent = `${v}`;
           }),
           () => {
@@ -76,7 +71,7 @@ export function register(options: Options) {
           },
         );
       }
-      if (options.className) {
+      if (isAtom(options.className)) {
         unsubs.push(
           subscribe(store, options.className, (v) => {
             instance.className = `${v}`;
@@ -85,26 +80,28 @@ export function register(options: Options) {
       }
       if (options.attrs) {
         Object.entries(options.attrs).forEach(([key, atom]) => {
-          unsubs.push(
-            subscribe(store, atom, (v) => {
-              instance.setAttribute(
-                key,
-                typeof v === 'number' ? `${v}px` : `${v}`,
-              );
-            }),
-          );
+          if (isAtom(atom))
+            unsubs.push(
+              subscribe(store, atom, (v) => {
+                instance.setAttribute(
+                  key,
+                  typeof v === 'number' ? `${v}px` : `${v}`,
+                );
+              }),
+            );
         });
       }
     }
     if (instance instanceof HTMLElement) {
       if (options.style) {
         Object.entries(options.style).forEach(([key, atom]) => {
-          unsubs.push(
-            subscribe(store, atom as DisplayableAtom, (v) => {
-              (instance.style as any)[key] =
-                typeof v === 'number' ? `${v}px` : `${v}`;
-            }),
-          );
+          if (isAtom(atom))
+            unsubs.push(
+              subscribe(store, atom as DisplayableAtom, (v) => {
+                (instance.style as any)[key] =
+                  typeof v === 'number' ? `${v}px` : `${v}`;
+              }),
+            );
         });
       }
     }
