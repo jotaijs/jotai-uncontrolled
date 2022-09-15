@@ -19,37 +19,94 @@ const SUBSCRIBE_ATOM = 's';
 
 type Unsubscribe = () => void;
 
+const subscribe = (
+  store: Store,
+  atom: DisplayableAtom,
+  set: (v: Displayable) => void,
+  suspend?: () => void,
+) => {
+  const unsub = store[SUBSCRIBE_ATOM](atom, () => {
+    const atomState = store[READ_ATOM](atom);
+    if ('e' in atomState) {
+      throw atomState.e;
+    }
+    if ('p' in atomState) {
+      suspend?.();
+      return;
+    }
+    if ('v' in atomState) {
+      set(atomState.v);
+      return;
+    }
+    throw new Error('no atom value');
+  });
+  return unsub;
+};
+
 type Options = {
+  text?: DisplayableAtom;
+  className?: DisplayableAtom;
+  style?: Partial<{
+    [key in keyof CSSStyleDeclaration]: DisplayableAtom;
+  }>;
+  attrs?: {
+    [key: string]: DisplayableAtom;
+  };
   scope?: Scope;
   pending?: string;
 };
 
-// TODO support attributes like style, className, etc.
-
-export function register(atom: DisplayableAtom, options?: Options) {
-  const ScopeContext = getScopeContext(options?.scope);
+export function register(options: Options) {
+  const ScopeContext = getScopeContext(options.scope);
   const store: Store = use(ScopeContext).s;
-  let unsub: Unsubscribe | undefined;
+  const unsubs: Unsubscribe[] = [];
   return (instance: unknown) => {
-    unsub?.();
+    unsubs.forEach((unsub) => unsub());
+    unsubs.splice(0);
     if (instance instanceof Element) {
-      unsub = store[SUBSCRIBE_ATOM](atom, () => {
-        const atomState = store[READ_ATOM](atom);
-        if ('e' in atomState) {
-          throw atomState.e;
-        }
-        if ('p' in atomState) {
-          if (options && 'pending' in options) {
-            instance.textContent = options.pending;
-          }
-          return;
-        }
-        if ('v' in atomState) {
-          instance.textContent = `${atomState.v}`;
-          return;
-        }
-        throw new Error('no atom value');
-      });
+      if (options.text) {
+        unsubs.push(
+          subscribe(store, options.text, (v) => {
+            instance.textContent = `${v}`;
+          }),
+          () => {
+            if ('pending' in options) {
+              instance.textContent = options.pending;
+            }
+          },
+        );
+      }
+      if (options.className) {
+        unsubs.push(
+          subscribe(store, options.className, (v) => {
+            instance.className = `${v}`;
+          }),
+        );
+      }
+      if (options.attrs) {
+        Object.entries(options.attrs).forEach(([key, atom]) => {
+          unsubs.push(
+            subscribe(store, atom, (v) => {
+              instance.setAttribute(
+                key,
+                typeof v === 'number' ? `${v}px` : `${v}`,
+              );
+            }),
+          );
+        });
+      }
+    }
+    if (instance instanceof HTMLElement) {
+      if (options.style) {
+        Object.entries(options.style).forEach(([key, atom]) => {
+          unsubs.push(
+            subscribe(store, atom as DisplayableAtom, (v) => {
+              (instance.style as any)[key] =
+                typeof v === 'number' ? `${v}px` : `${v}`;
+            }),
+          );
+        });
+      }
     }
   };
 }

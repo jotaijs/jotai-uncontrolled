@@ -9,7 +9,16 @@ const UncontrolledCounter = () => {
   return (
     <div>
       <h1>Uncontrolled</h1>
-      Count: <span ref={register({ text: countAtom })} /> ({Math.random()})
+      Count:{' '}
+      <span
+        style={{ position: 'relative' }}
+        ref={register({
+          style: { left: atom((get) => get(countAtom) * 5) },
+        })}
+      >
+        Hello
+      </span>
+      <div>({Math.random()})</div>
     </div>
   );
 };
@@ -19,7 +28,9 @@ const Counter = () => {
   return (
     <div>
       <h1>Controlled</h1>
-      Count: <span>{count}</span> ({Math.random()})
+      Count:{' '}
+      <span style={{ position: 'relative', left: count * 5 }}>Hello</span>
+      <div>({Math.random()})</div>
     </div>
   );
 };
