@@ -1,1 +1,1 @@
-export { register } from './register';
+export { uncontrolled } from './uncontrolled';

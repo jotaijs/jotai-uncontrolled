@@ -1,23 +1,25 @@
 import React from 'react';
 
 import { atom, useAtom, useSetAtom } from 'jotai';
-import { register } from 'jotai-uncontrolled';
+import { uncontrolled } from 'jotai-uncontrolled';
 
 const countAtom = atom(0);
+
+const UncontrolledSpan = uncontrolled('span');
 
 const UncontrolledCounter = () => {
   return (
     <div>
       <h1>Uncontrolled</h1>
       Count:{' '}
-      <span
-        style={{ position: 'relative' }}
-        ref={register({
-          style: { left: atom((get) => get(countAtom) * 5) },
-        })}
+      <UncontrolledSpan
+        style={{
+          position: 'relative',
+          left: atom((get) => get(countAtom) * 5),
+        }}
       >
         Hello
-      </span>
+      </UncontrolledSpan>
       <div>({Math.random()})</div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { atom, useAtom, useSetAtom } from 'jotai';
-import { register } from 'jotai-uncontrolled';
+import { uncontrolled } from 'jotai-uncontrolled';
 
 const countAtom = atom(0);
 
@@ -9,7 +9,8 @@ const UncontrolledCounter = () => {
   return (
     <div>
       <h1>Uncontrolled</h1>
-      Count: <span ref={register({ text: countAtom })} /> ({Math.random()})
+      Count: <uncontrolled.span>{countAtom}</uncontrolled.span> ({Math.random()}
+      )
     </div>
   );
 };

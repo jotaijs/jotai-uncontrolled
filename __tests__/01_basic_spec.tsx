@@ -1,7 +1,7 @@
-import { register } from '../src/index';
+import { uncontrolled } from '../src/index';
 
 describe('basic spec', () => {
   it('should export functions', () => {
-    expect(register).toBeDefined();
+    expect(uncontrolled).toBeDefined();
   });
 });
