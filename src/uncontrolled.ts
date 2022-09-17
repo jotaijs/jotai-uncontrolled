@@ -51,10 +51,10 @@ const removeAtoms = <T>(xa: [T]): [T] | [] => {
 const READ_ATOM = 'r';
 const SUBSCRIBE_ATOM = 's';
 
-const subscribe = (
+const subscribe = <T>(
   store: Store,
-  atom: DisplayableAtom,
-  set: (v: Displayable) => void,
+  atom: Atom<T | Promise<T>>,
+  set: (v: T) => void,
   suspend?: () => void,
 ) =>
   store[SUBSCRIBE_ATOM](atom, () => {
@@ -91,7 +91,7 @@ type Props<
   };
 } & {
   [Key in Exclude<keyof T, 'children' | 'className' | 'style'>]?:
-    | DisplayableAtom
+    | Atom<Displayable | boolean | Promise<Displayable | boolean>>
     | T[Key];
 };
 
@@ -102,7 +102,7 @@ const register = (
   className: Props['className'],
   style: Props['style'],
   rest: {
-    [key: string]: DisplayableAtom | unknown;
+    [key: string]: Atom<unknown> | unknown;
   },
 ) => {
   const ScopeContext = getScopeContext(atomScope);
@@ -116,7 +116,7 @@ const register = (
     if (isAtomLike(children)) {
       unsubs.push(
         subscribe(store, children, (v) => {
-          instance.textContent = `${v}`;
+          instance.textContent = v;
         }),
         () => {
           if (atomPending !== undefined) {
@@ -128,7 +128,7 @@ const register = (
     if (isAtomLike(className)) {
       unsubs.push(
         subscribe(store, className, (v) => {
-          instance.className = `${v}`;
+          instance.className = v;
         }),
       );
     }
@@ -137,7 +137,7 @@ const register = (
         if (isAtomLike(atom))
           unsubs.push(
             subscribe(store, atom, (v) => {
-              instance.style[key] = typeof v === 'number' ? `${v}px` : `${v}`;
+              instance.style[key] = typeof v === 'number' ? `${v}px` : v;
             }),
           );
       });
@@ -145,8 +145,12 @@ const register = (
     Object.entries(rest).forEach(([key, atom]) => {
       if (isAtomLike(atom))
         unsubs.push(
-          subscribe(store, atom as DisplayableAtom, (v) => {
-            instance.setAttribute(key, `${v}`);
+          subscribe(store, atom, (v) => {
+            if (instance.setAttribute && typeof v === 'string') {
+              instance.setAttribute(key, v);
+            } else {
+              instance[key] = v;
+            }
           }),
         );
     });
