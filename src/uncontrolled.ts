@@ -1,8 +1,9 @@
+/// <reference types="react/experimental" />
+
 import {
   createElement,
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  experimental_use as use,
+  experimental_use as experimentalUse,
+  useContext,
 } from 'react';
 import type {
   ComponentProps,
@@ -12,6 +13,16 @@ import type {
 } from 'react';
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai';
 import type { Atom } from 'jotai';
+
+let use = experimentalUse;
+if (!use) {
+  // TODO this is a temporary workaround
+  // eslint-disable-next-line no-console
+  console.warn(
+    'experimental_use is not available. Falling back to useContext. It may not work as expected due to rules of hooks.',
+  );
+  use = useContext as any;
+}
 
 type ExtractContextValue<T> = T extends Context<infer V> ? V : never;
 
