@@ -76,7 +76,10 @@ const subscribe = <T>(
       throw atomState.e;
     }
     if ('p' in atomState) {
-      suspend?.();
+      if (suspend) {
+        suspend();
+        prevValue = EMPTY;
+      }
       return;
     }
     if ('v' in atomState) {
