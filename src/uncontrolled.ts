@@ -61,14 +61,16 @@ const removeAtoms = <T>(xa: [T]): [T] | [] => {
 
 const READ_ATOM = 'r';
 const SUBSCRIBE_ATOM = 's';
+const EMPTY = Symbol();
 
 const subscribe = <T>(
   store: Store,
   atom: Atom<T | Promise<T>>,
   set: (v: T) => void,
   suspend?: () => void,
-) =>
-  store[SUBSCRIBE_ATOM](atom, () => {
+) => {
+  let prevValue: T | typeof EMPTY = EMPTY;
+  const unsub = store[SUBSCRIBE_ATOM](atom, () => {
     const atomState = store[READ_ATOM](atom);
     if ('e' in atomState) {
       throw atomState.e;
@@ -78,11 +80,16 @@ const subscribe = <T>(
       return;
     }
     if ('v' in atomState) {
-      set(atomState.v);
+      if (!Object.is(prevValue, atomState.v)) {
+        set(atomState.v);
+        prevValue = atomState.v;
+      }
       return;
     }
     throw new Error('no atom value');
   });
+  return unsub;
+};
 
 type Props<
   T extends {
