@@ -70,7 +70,7 @@ const subscribe = <T>(
   suspend?: () => void,
 ) => {
   let prevValue: T | typeof EMPTY = EMPTY;
-  const unsub = store[SUBSCRIBE_ATOM](atom, () => {
+  const callback = () => {
     const atomState = store[READ_ATOM](atom);
     if ('e' in atomState) {
       throw atomState.e;
@@ -80,6 +80,7 @@ const subscribe = <T>(
         suspend();
         prevValue = EMPTY;
       }
+      atomState.p.then(callback);
       return;
     }
     if ('v' in atomState) {
@@ -90,8 +91,8 @@ const subscribe = <T>(
       return;
     }
     throw new Error('no atom value');
-  });
-  return unsub;
+  };
+  return store[SUBSCRIBE_ATOM](atom, callback);
 };
 
 type Props<
@@ -136,14 +137,18 @@ const register = (
     }
     if (isAtomLike(children)) {
       unsubs.push(
-        subscribe(store, children, (v) => {
-          instance.textContent = v;
-        }),
-        () => {
-          if (atomPending !== undefined) {
-            instance.textContent = atomPending;
-          }
-        },
+        subscribe(
+          store,
+          children,
+          (v) => {
+            instance.textContent = v;
+          },
+          () => {
+            if (atomPending !== undefined) {
+              instance.textContent = atomPending;
+            }
+          },
+        ),
       );
     }
     if (isAtomLike(className)) {
@@ -180,10 +185,10 @@ const register = (
 
 const createUncontrolledComponent = (tag: any) => {
   const component = (props: Props) => {
-    const { atomScope, atomPending, children, className, style, ...rest } =
-      props;
+    const { atomScope, atomPending, ...baseProps } = props;
+    const { children, className, style, ...rest } = baseProps;
     return createElement(tag, {
-      ...removeAtoms([props])[0],
+      ...removeAtoms([baseProps])[0],
       ref: register(atomScope, atomPending, children, className, style, rest),
     });
   };
