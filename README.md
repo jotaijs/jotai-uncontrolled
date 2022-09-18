@@ -9,3 +9,4 @@
 - [uncontrolled api](https://twitter.com/dai_shi/status/1570703789270646784)
 - [Comparison code](https://twitter.com/dai_shi/status/1570713352137064448)
 - [Comparison table](https://twitter.com/dai_shi/status/1570719014489292802)
+- [Async support](https://twitter.com/dai_shi/status/1571304725689274369)
