@@ -92,7 +92,9 @@ const subscribe = <T>(
     }
     throw new Error('no atom value');
   };
-  return store[SUBSCRIBE_ATOM](atom, callback);
+  const unsub = store[SUBSCRIBE_ATOM](atom, callback);
+  callback();
+  return unsub;
 };
 
 type Props<
