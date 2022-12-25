@@ -11,3 +11,4 @@
 - [Comparison table](https://twitter.com/dai_shi/status/1570719014489292802)
 - [Async support](https://twitter.com/dai_shi/status/1571304725689274369)
 - [Animation example](https://twitter.com/dai_shi/status/1571325689143660544)
+- [v0.4.0 announcement](https://twitter.com/dai_shi/status/1606909458592206848)
