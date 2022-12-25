@@ -116,7 +116,7 @@ const TodoList = () => {
 
 const App = () => (
   <>
-    <h1>Jotai-Signal TODOs App</h1>
+    <h1>Jotai-Uncontrolled TODOs App</h1>
     <TodoList />
   </>
 );
