@@ -1,10 +1,6 @@
 /// <reference types="react/experimental" />
 
-import {
-  createElement,
-  experimental_use as experimentalUse,
-  useContext,
-} from 'react';
+import { createElement, use as experimentalUse, useContext } from 'react';
 import type {
   ComponentProps,
   Context,
