@@ -40,31 +40,19 @@ const removeAtoms = <T>(xa: [T]): [T] | [] => {
   return xa;
 };
 
-const EMPTY = Symbol();
-
 const subscribe = <T>(
   store: Store,
   atom: Atom<T>,
   set: (v: Awaited<T>) => void,
   suspend?: () => void,
 ) => {
-  let prevValue: T | typeof EMPTY = EMPTY;
-  const setValue = (nextValue: Awaited<T>) => {
-    if (!Object.is(prevValue, nextValue)) {
-      set(nextValue);
-      prevValue = nextValue;
-    }
-  };
   const callback = () => {
     const value = store.get(atom);
     if (value instanceof Promise) {
-      if (suspend) {
-        suspend();
-        prevValue = EMPTY;
-      }
-      value.then(setValue);
+      suspend?.();
+      value.then(set);
     } else {
-      setValue(value as Awaited<T>);
+      set(value as Awaited<T>);
     }
   };
   const unsub = store.sub(atom, callback);
