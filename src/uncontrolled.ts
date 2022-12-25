@@ -1,31 +1,16 @@
-/// <reference types="react/experimental" />
-
-import { createElement, use as experimentalUse, useContext } from 'react';
+import { createElement } from 'react';
 import type {
   ComponentProps,
-  Context,
   FunctionComponent,
   JSXElementConstructor,
 } from 'react';
-import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai';
-import type { Atom } from 'jotai';
+import { getDefaultStore } from 'jotai/vanilla';
+import type { Atom } from 'jotai/vanilla';
 
-let use = experimentalUse;
-if (!use) {
-  // TODO this is a temporary workaround
-  // eslint-disable-next-line no-console
-  console.warn(
-    'experimental_use is not available. Falling back to useContext. It may not work as expected due to rules of hooks.',
-  );
-  use = useContext as any;
-}
-
-type ExtractContextValue<T> = T extends Context<infer V> ? V : never;
+type Store = ReturnType<typeof getDefaultStore>;
 
 type Displayable = string | number;
 type DisplayableAtom = Atom<Displayable | Promise<Displayable>>;
-type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>;
-type Store = ExtractContextValue<ReturnType<typeof getScopeContext>>['s'];
 
 const isAtomLike = (atom: unknown): atom is { read: (...args: any[]) => any } =>
   typeof (atom as any)?.read === 'function';
@@ -55,40 +40,34 @@ const removeAtoms = <T>(xa: [T]): [T] | [] => {
   return xa;
 };
 
-const READ_ATOM = 'r';
-const SUBSCRIBE_ATOM = 's';
 const EMPTY = Symbol();
 
 const subscribe = <T>(
   store: Store,
-  atom: Atom<T | Promise<T>>,
-  set: (v: T) => void,
+  atom: Atom<T>,
+  set: (v: Awaited<T>) => void,
   suspend?: () => void,
 ) => {
   let prevValue: T | typeof EMPTY = EMPTY;
-  const callback = () => {
-    const atomState = store[READ_ATOM](atom);
-    if ('e' in atomState) {
-      throw atomState.e;
+  const setValue = (nextValue: Awaited<T>) => {
+    if (!Object.is(prevValue, nextValue)) {
+      set(nextValue);
+      prevValue = nextValue;
     }
-    if ('p' in atomState) {
+  };
+  const callback = () => {
+    const value = store.get(atom);
+    if (value instanceof Promise) {
       if (suspend) {
         suspend();
         prevValue = EMPTY;
       }
-      atomState.p.then(callback);
-      return;
+      value.then(setValue);
+    } else {
+      setValue(value as Awaited<T>);
     }
-    if ('v' in atomState) {
-      if (!Object.is(prevValue, atomState.v)) {
-        set(atomState.v);
-        prevValue = atomState.v;
-      }
-      return;
-    }
-    throw new Error('no atom value');
   };
-  const unsub = store[SUBSCRIBE_ATOM](atom, callback);
+  const unsub = store.sub(atom, callback);
   callback();
   return unsub;
 };
@@ -100,7 +79,7 @@ type Props<
     style?: unknown;
   } = object,
 > = {
-  atomScope?: Scope;
+  atomStore?: Store;
   atomPending?: string;
   children?: DisplayableAtom | T['children'];
   className?: DisplayableAtom | T['className'];
@@ -116,7 +95,7 @@ type Props<
 };
 
 const register = (
-  atomScope: Props['atomScope'],
+  atomStore: Props['atomStore'],
   atomPending: Props['atomPending'],
   children: Props['children'],
   className: Props['className'],
@@ -125,8 +104,7 @@ const register = (
     [key: string]: Atom<unknown> | unknown;
   },
 ) => {
-  const ScopeContext = getScopeContext(atomScope);
-  const store: Store = use(ScopeContext).s;
+  const store = atomStore || getDefaultStore();
   const unsubs: (() => void)[] = [];
   return (instance: any) => {
     unsubs.splice(0).forEach((unsub) => unsub());
@@ -183,11 +161,11 @@ const register = (
 
 const createUncontrolledComponent = (tag: any) => {
   const component = (props: Props) => {
-    const { atomScope, atomPending, ...baseProps } = props;
+    const { atomStore, atomPending, ...baseProps } = props;
     const { children, className, style, ...rest } = baseProps;
     return createElement(tag, {
       ...removeAtoms([baseProps])[0],
-      ref: register(atomScope, atomPending, children, className, style, rest),
+      ref: register(atomStore, atomPending, children, className, style, rest),
     });
   };
   return component;
