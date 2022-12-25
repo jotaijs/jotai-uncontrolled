@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { atom, useAtom, useSetAtom } from 'jotai';
+import { atom } from 'jotai/vanilla';
+import { useAtom, useSetAtom } from 'jotai/react';
 import { uncontrolled } from 'jotai-uncontrolled';
 
 const countAtom = atom(0);

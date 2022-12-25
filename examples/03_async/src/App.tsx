@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 
-import { atom, useAtom } from 'jotai';
+import { atom } from 'jotai/vanilla';
+import { useAtom } from 'jotai/react';
 import { uncontrolled } from 'jotai-uncontrolled';
 
 const idAtom = atom(1);
@@ -18,7 +19,7 @@ const UncontrolledUser = () => {
       style={{ backgroundColor: createRandomColor() }}
       atomPending="Loading..."
     >
-      {atom((get) => `User: ${get(userAtom)}`)}
+      {atom(async (get) => `User: ${await get(userAtom)}`)}
     </uncontrolled.div>
   );
 };

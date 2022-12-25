@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { atom } from 'jotai/vanilla';
+import { useAtomValue, useSetAtom } from 'jotai/react';
 import { uncontrolled } from 'jotai-uncontrolled';
 
 const xAtom = atom(100);
