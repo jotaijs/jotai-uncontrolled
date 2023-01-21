@@ -63,21 +63,19 @@ const subscribe = <T>(
 type Props<
   T extends {
     children?: unknown;
-    className?: unknown;
     style?: unknown;
   } = object,
 > = {
   atomStore?: Store;
   atomPending?: string;
   children?: DisplayableAtom | T['children'];
-  className?: DisplayableAtom | T['className'];
   style?: {
     [Key in keyof NonNullable<T['style']>]?:
       | DisplayableAtom
       | NonNullable<T['style']>[Key];
   };
 } & {
-  [Key in Exclude<keyof T, 'children' | 'className' | 'style'>]?:
+  [Key in Exclude<keyof T, 'children' | 'style'>]?:
     | Atom<Displayable | boolean | Promise<Displayable | boolean>>
     | T[Key];
 };
@@ -86,7 +84,6 @@ const register = (
   atomStore: Props['atomStore'],
   atomPending: Props['atomPending'],
   children: Props['children'],
-  className: Props['className'],
   style: Props['style'],
   rest: {
     [key: string]: Atom<unknown> | unknown;
@@ -115,13 +112,6 @@ const register = (
         ),
       );
     }
-    if (isAtomLike(className)) {
-      unsubs.push(
-        subscribe(store, className, (v) => {
-          instance.className = v;
-        }),
-      );
-    }
     if (style) {
       Object.entries(style).forEach(([key, atom]) => {
         if (isAtomLike(atom))
@@ -136,11 +126,7 @@ const register = (
       if (isAtomLike(atom))
         unsubs.push(
           subscribe(store, atom, (v) => {
-            if (instance.setAttribute && typeof v === 'string') {
-              instance.setAttribute(key, v);
-            } else {
-              instance[key] = v;
-            }
+            instance[key] = v;
           }),
         );
     });
@@ -150,10 +136,10 @@ const register = (
 const createUncontrolledComponent = (tag: any) => {
   const component = (props: Props) => {
     const { atomStore, atomPending, ...baseProps } = props;
-    const { children, className, style, ...rest } = baseProps;
+    const { children, style, ...rest } = baseProps;
     return createElement(tag, {
       ...removeAtoms([baseProps])[0],
-      ref: register(atomStore, atomPending, children, className, style, rest),
+      ref: register(atomStore, atomPending, children, style, rest),
     });
   };
   return component;
