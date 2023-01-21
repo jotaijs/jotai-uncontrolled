@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## [0.4.1] - 2023-02-21
 ### Changed
 - refactor: simplify apply props logic #3
 
