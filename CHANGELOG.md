@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 ### Changed
-- Refactor to simplify apply props logic
+- refactor: simplify apply props logic #3
 
 ## [0.4.0] - 2022-12-25
 ### Added
